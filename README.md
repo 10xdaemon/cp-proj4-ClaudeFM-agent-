@@ -139,6 +139,37 @@ Because genre carries the single largest point bonus (+2.0), the recipe will con
 
 ---
 
+## System Architecture
+
+```mermaid
+flowchart LR
+    U([User Query]) --> VQ["validate_query\nguardrails.py"]
+    UP([CLI Profile]) --> GS
+
+    VQ --> PI
+
+    subgraph AGENT["Agent — agent.py"]
+        PI["parse_user_intent"] --> TS["tavily_search"]
+        PI --> SF["spotify_fetch"]
+    end
+
+    subgraph SCORER["Hybrid Scorer — scorer.py / recommender.py"]
+        GS["Gaussian Score"] & LS["LLM Score"] --> BL["Blend"]
+    end
+
+    TS -->|editorial context| LS
+    SF --> GS & LS
+    WS([Weight Slider]) -->|gaussian_weight| BL
+
+    BL --> GR["validate_profile / confidence / flags\nguardrails.py"]
+    GR --> OUT["Ranked Songs, Explanations, Confidence, Warnings"]
+    OUT -->|refines query| U
+
+    TESTS[["Unit Tests\nEval Harness"]] -.-> GS
+```
+
+---
+
 ## Getting Started
 
 ### Setup
