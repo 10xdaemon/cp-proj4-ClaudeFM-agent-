@@ -61,18 +61,6 @@ def get_token() -> str:
     return response.json()["access_token"]
 
 
-def search_artist_id(name: str, token: str) -> str | None:
-    """Return the Spotify artist ID for the first search match, or None."""
-    response = requests.get(
-        f"{_API_BASE}/search",
-        headers={"Authorization": f"Bearer {token}"},
-        params={"q": name, "type": "artist", "limit": 1},
-        timeout=10,
-    )
-    response.raise_for_status()
-    items = response.json().get("artists", {}).get("items", [])
-    return items[0]["id"] if items else None
-
 
 def _feature_defaults(genre: str) -> dict:
     """Return audio feature defaults for a genre string, falling back to averages."""

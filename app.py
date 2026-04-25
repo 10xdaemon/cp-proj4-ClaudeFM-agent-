@@ -1,12 +1,13 @@
 import threading
 import time
+import random
 import streamlit as st
 from src.agent import run_agent, AgentResult
 from src.spotify_client import get_token, fetch_recommendations
 from src.scorer import gaussian_score_normalized
 from src.recommender import UserProfile
 
-st.set_page_config(page_title="Claude FM", page_icon="🎵", layout="wide")
+st.set_page_config(page_title="Claude FM", page_icon="📻", layout="wide")
 
 # ── Session state initialization ───────────────────────────────────────────────
 if "query" not in st.session_state:
@@ -32,10 +33,10 @@ if "result_query" not in st.session_state:
 
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.header("Settings")
+    st.header("Configuration")
 
     gaussian_weight = st.slider(
-        "Algorithm  ←→   app",
+        "dev's choice  ←→ agentic search ",
         min_value=0.0,
         max_value=1.0,
         value=0.5,
@@ -58,12 +59,12 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("---")
-    st.caption("API keys loaded from .env")
+    st.caption("Authored by 10xdaemon & Claude Code")
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 left, center, right = st.columns([1, 2, 1])
 with center:
-    st.markdown("<h1 style='text-align:center'>Claude FM</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center'>💽 Claude FM</h1>", unsafe_allow_html=True)
     st.markdown(
         "<p style='text-align:center; color:gray; margin-top:-8px'>"
         "Type what you're about to do and get a personalized playlist.</p>",
@@ -90,20 +91,20 @@ if submitted and query.strip():
         st.session_state.result = None
 
         _MUSICAL_FACTS = [
-            "The world's oldest known song is 3,400 years old — a Hurrian hymn carved on a clay tablet.",
+            "The world's oldest known song is 3,400 years old: a Hurrian hymn carved on a clay tablet.",
             "A piano has 12,000 parts, 10,000 of which are moving.",
             "'Happy Birthday to You' was the first song broadcast from space (1965).",
-            "The loudest band ever recorded is KISS at 136 dB — louder than a jet engine.",
+            "The loudest band ever recorded is KISS at 136 dB, louder than a jet engine.",
             "Beethoven was completely deaf when he composed his 9th Symphony.",
-            "The 'Mozart Effect' was later debunked — music won't make you smarter, but it will make you happier.",
-            "Vinyl records outsold CDs for the first time since 1987 — in 2022.",
+            "The 'Mozart Effect' was later debunked. Music won't make you smarter, but it will make you happier.",
+            "Vinyl records outsold CDs for the first time since 1987 in 2022.",
             "A song stuck in your head is called an 'earworm' (Ohrwurm in German).",
-            "The most covered song ever is 'Yesterday' by The Beatles — over 2,200 recorded versions.",
+            "The most covered song ever is 'Yesterday' by The Beatles...OVER 2,200 recorded versions.",
             "Listening to music releases dopamine, the same chemical triggered by eating chocolate.",
             "The electric guitar was invented in 1931 by George Beauchamp.",
-            "'Bohemian Rhapsody' was rejected by radio stations for being too long — it became a #1 hit anyway.",
+            "'Bohemian Rhapsody' was rejected by radio stations for being too long. It became a #1 hit anyway.",
             "The human ear can distinguish over 400,000 different sounds.",
-            "Hip-hop is now the most-streamed genre globally, overtaking rock.",
+            "Hip-hop is now the most streamed genre globally, overtaking rock.",
             "Some whales sing songs that last up to 22 hours.",
         ]
 
@@ -120,16 +121,20 @@ if submitted and query.strip():
 
             thread = threading.Thread(target=_run_agent, daemon=True)
             thread.start()
-            idx = 0
+            _shuffled = _MUSICAL_FACTS.copy()
+            random.shuffle(_shuffled)
             with st.spinner("Building your playlist..."):
                 fact_placeholder = st.empty()
+                fact_idx = 0
                 while thread.is_alive():
                     fact_placeholder.markdown(
-                        f"<p style='text-align:center;color:gray'>🎵 {_MUSICAL_FACTS[idx % len(_MUSICAL_FACTS)]}</p>",
+                        f"<p style='text-align:center;color:gray'>🔉 {_shuffled[fact_idx % len(_shuffled)]}</p>",
                         unsafe_allow_html=True,
                     )
-                    idx += 1
-                    time.sleep(5.0)
+                    fact_idx += 1
+                    if fact_idx % len(_shuffled) == 0:
+                        random.shuffle(_shuffled)
+                    time.sleep(6.6)
             fact_placeholder.empty()
 
         st.session_state.result = result_container["result"]
@@ -170,7 +175,7 @@ if result is not None:
     # ── Agent reasoning trace ────────────────────────────────────────────────
     _, _exp_c, _ = st.columns([1, 2, 1])
     with _exp_c:
-        with st.expander(f"under the hood — \"{st.session_state.result_query}\"", expanded=False):
+        with st.expander(f"🤖 Under the hood : \"{st.session_state.result_query}\"", expanded=False):
             for step in result.reasoning_steps:
                 st.markdown(f"**`{step['tool']}`**")
                 st.json(step["input"], expanded=False)
