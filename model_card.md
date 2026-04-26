@@ -1,14 +1,14 @@
-# 🎧 Model Card: Music Recommender Simulation
+# 🎧 Model Card: Local-Gaussian Scorer
 
 ## 1. Model Name
 
-**RubberSoul v1**
+**RubberSoul v1** — Gaussian scoring component of OpenFM-agent
 
 ---
 
 ## 2. Intended Use
 
-A recommender suggests songs from a small catalog based on a user's preferences, things like preferred genre, mood, and energy level. It assumes the user can describe what they want upfront, and takes those inputs at face value without learning or adapting over time. It was built for exploring and understanding how scoring based recommendation systems work.
+A scoring based recommender that ranks songs against a structured user taste profile. It assumes the user can describe what they want upfront and takes those inputs at face value without learning or adapting over time. This card covers the Gaussian scoring component (`recommender.py`) specifically — in the final system it runs as one half of a hybrid scorer alongside a Claude LLM scorer, with results blended via a user controlled weight.
 
 ---
 
@@ -20,7 +20,7 @@ You give it a profile: a genre, mood, target values for energy, tempo, etc... Fo
 
 ## 4. Data
 
-The catalog has 20 songs spanning 17 genres; from pop to synthwave, and 16 moods. No songs were added or removed from the original dataset. Some moods like "euphoric" and "peaceful" have only one song, so users who lean toward those moods have very little to choose from.
+In the original simulation, the scorer ran against a static 20 song catalog (`songs.csv`) spanning 17 genres and 16 moods. In the final system, that catalog is replaced by live Spotify results — up to 10 tracks fetched per query. Because Spotify's `/audio-features` endpoint requires user authentication (unavailable under Client Credentials), audio features are not pulled per track; instead they are inferred from genre defaults in `_GENRE_DEFAULTS` and spread across results using search position as a relevance proxy. The mood and genre constraints from the original catalog no longer apply, but the inferred features introduce their own bias: every track in the same genre starts from the same baseline values before position adjustment.
 
 ---
 
@@ -60,11 +60,11 @@ Each run was checked by reading the "per component" score breakdown for all five
 
 ## 8. Future Work
 
-The most urgent fix would be guarding against a sigma of zero, which currently crashes the program. Beyond that, the scoring would benefit from including `valence` and `danceability`, which are already in the dataset but ignored entirely. The mood graph could be expanded to cover moods users naturally reach for like "sad", that currently score zero without any warning.
+~~The most urgent fix would be guarding against a sigma of zero, which currently crashes the program.~~ **Resolved** — `sigma=0` is now auto-clamped to `0.01` in `guardrails.py`. The scoring would still benefit from including `valence` and `danceability`, which are already in the dataset but ignored entirely. The mood graph could also be expanded to cover moods users naturally reach for like "sad", that currently score zero without any warning.
 
 ---
 
-## 9. Personal Reflection
-
+## 9. Personal Reflection 
+*original*:
 The biggest takeaway was how much a single design decision (the +2.0 genre bonus) can quietly shape every result without being obvious from the outside. It also showed that a score can look very confident while failing on the dimension the user actually cares about most, which is exactly what makes real recommender systems hard to trust at times. It changed how I think about apps like Spotify and Youtube Music. Behind every "because you listened to X" label is probably a scoring system with similar quirks, just with millions of songs smoothing them out.
 
